@@ -1,265 +1,404 @@
-# **講義文字起こし＆要約デモの仕様書**
+\<\!DOCTYPE html\>
 
-Version: 0.1.0  
-作成日: 2026-05-27  
-作成者: Developer Team
+\<html lang="ja"\>
 
-## **概要**
+\<head\>
 
-* ユーザー導線  
-  * 講義名を入力（任意・推奨）  
-  * 音声ファイルをファイル選択で投入  
-  * 実行ボタン押下で処理開始  
-  * 文字起こしと要約を表示  
-  * 文字起こし・要約・要点をコピー可能  
-* 出力  
-  * transcription: 文字起こしテキスト  
-  * summary: 要約テキスト  
-  * keyPoints: 要点（3〜5個の箇条書き）  
-* エラー対応  
-  * ファイル未選択  
-  * APIキー未設定  
-  * 外部API呼び出しエラー  
-* 公式リファレンス  
-  * Gemini API ドキュメント: [https://ai.google.dev/gemini-api/docs/models?hl=ja](https://ai.google.dev/gemini-api/docs/models?hl=ja)
+  \<meta charset="UTF-8" /\>
 
----
+  \<title\>講義文字起こし＆要約デモ\</title\>
 
-## **範囲と目的**
+  \<style\>
 
-* 本仕様は、フロントエンド＋バックエンドの実装ガイドラインと、API連携の契約を定義する。  
-* 目的は、講義の音声データから文字起こしと要約を自動生成し、要点を抽出してUI上で提供すること。
+    body { font-family: Arial, sans-serif; padding: 20px; }
 
----
+    .section { margin-bottom: 20px; }
 
-## **用語集**
+    .output { border: 1px solid \#ccc; padding: 12px; border-radius: 6px; min-height: 80px; white-space: pre-wrap; }
 
-* transcription: 文字起こし結果  
-* summary: 要約結果  
-* keyPoints: 要点の箇条書き  
-* Gemini API: Google Gemini の要約 API  
-* Speech-to-Text: 音声から文字起こしを行うサービス
+    button { margin-top: 6px; }
 
----
+  \</style\>
 
-## **アーキテクチャ概要**
+\</head\>
 
-* クライアント側（フロントエンド）  
-  * 音声ファイルと講義名を受け取り、バックエンドへ送信する  
-  * 文字起こし・要約・要点を表示・コピー機能を提供  
-* サーバー側（バックエンド）  
-  * 音声ファイルを受け取り、文字起こしを実施（例：Google Cloud Speech-to-Text）  
-  * 文字起こし結果を Gemini API へ送信して要約を取得  
-  * 要点の抽出（要約から3〜5点を抽出）  
-  * クライアントへ JSON で返却  
-* 外部サービス連携  
-  * Speech-to-Text: 文字起こし  
-  * Gemini API: 要約  
-  * 認証・課金・権限管理は各サービスの推奨パターンに従う
+\<body\>
 
----
+  \<h1\>講義文字起こし＆要約デモ\</h1\>
 
-## **機能要件**
+  \<div class="section"\>
 
-* 入力  
-  * lectureName: string（任意、推奨）  
-  * audioFile: File（wav/mp3/m4a 等、サイズは後述の制限を参照）  
-* 処理  
-  * 実行ボタンを押すとバックエンドで処理を開始  
-* 出力  
-  * transcription: string（文字起こし）  
-  * summary: string（要約）  
-  * keyPoints: string\[\]（3〜5件の要点、箇条書き表示）  
-* コピー機能  
-  * 文字起こし／要約／要点それぞれにコピー可能ボタンを設置  
-* エラー表示  
-  * ファイルなしエラー  
-  * APIキーなしエラー  
-  * API呼び出しエラー  
-  * 予期せぬエラー
+    \<label\>講義名（任意）\</label\>\<br/\>
 
----
+    \<input type="text" id="lectureName" placeholder="講義名を入力" /\>
 
-## **非機能要件**
+  \</div\>
 
-* パフォーマンス  
-  * 音声ファイルの長さ・サイズに応じた処理時間を許容範囲内に抑える設計  
-* セキュリティ  
-  * APIキー・認証情報はサーバー側で管理  
-  * ファイルアップロードは検証済みの MIME タイプとサイズ制限を実装  
-* 可用性  
-  * 外部APIのリトライ機能と適切なエラーメッセージを提供  
-* アクセシビリティ  
-  * コピー機能、エラーメッセージは読み上げソースにも対応を想定
+  \<div class="section"\>
 
----
+    \<label\>音声ファイルを選択\</label\>\<br/\>
 
-## **API・インターフェース定義**
+    \<input type="file" id="audioFile" accept=".wav,.mp3,.m4a,.flac" /\>
 
-* フロントエンド → バックエンド  
-  * エンドポイント: POST /process  
-  * コンテンツタイプ: multipart/form-data  
-  * リクエストデータ  
-    * lectureName: string（任意）  
-    * audioFile: File（必須）  
-  * 例:  
-    * lectureName: "機械学習入門 第3回"  
-    * audioFile: アップロード音声ファイル  
-* バックエンド → 外部サービス  
-  * Speech-to-Text  
-    * 入力: 音声ファイル（ファイルパス or バイナリストリーム）  
-    * 出力: transcription  
-  * Gemini API  
-    * 入力: transcription  
-    * 出力: summary  
-* バックエンド → フロントエンド（成功時のレスポンス）  
-  * HTTP 200  
-  * レスポンス例: { "transcription": "文字起こしテキスト...", "summary": "要約テキスト...", "keyPoints": \["要点1", "要点2", "要点3"\] }  
-* エラーレスポンス  
-  * 400: クライアントエラー（例: 音声ファイル未指定）  
-  * 401/403: APIキー未設定  
-  * 500: 内部エラー/外部APIエラー  
-  * 例: { "message": "音声ファイルを選択してください。" }
+  \</div\>
 
----
+  \<div class="section"\>
 
-## **データモデルとフォーマット**
+    \<button id="runBtn"\>実行\</button\>
 
-* 送信データ  
-  * multipart/form-data  
-  * fields: lectureName (string, optional)  
-  * file: audioFile (binary)  
-* 返却データ（JSON）  
-  * transcription: string  
-  * summary: string  
-  * keyPoints: string\[\] (3〜5点)  
-* ローカルストレージ/キャッシュ  
-  * 必要に応じて実装、現状はセッション動作を想定
+  \</div\>
 
----
+  \<div class="section"\>
 
-## **画面/UI設計の指針**
+    \<h3\>文字起こし\</h3\>
 
-* 構成  
-  * 入力エリア: 講義名テキスト、音声ファイル選択  
-  * 操作用エリア: 実行ボタン  
-  * 出力エリア: 文字起こし、要約、要点  
-  * コピーエリア: 各セクション横にコピーボタン  
-  * エラー表示エリア: ページ上部または該当エリア近く  
-* ユーザー体験  
-  * 進捗状況を示すローディング表示  
-  * 成功/エラー時のトースト通知  
-  * コピー成功時のフィードバック
+    \<div id="transcription" class="output"\>\</div\>
 
----
+    \<button id="copyTranscriptBtn" style="display:none;"\>コピー\</button\>
 
-## **エラーハンドリングの方針**
+  \</div\>
 
-* フロントエンド  
-  * ファイル未選択時は即時エラーメッセージを表示  
-  * サーバーエラー時はレスポンスの message を表示  
-* バックエンド  
-  * ファイル検証エラーは 400、メッセージを返却  
-  * Gemini API キー未設定は 401/403、適切なメッセージを返却  
-  * 外部 API 呼び出し失敗は 500、リトライポリシーを検討  
-* ロギング  
-  * エラー時にはサーバーサイドで詳細ログを残す
+  \<div class="section"\>
 
----
+    \<h3\>要約\</h3\>
 
-## **セキュリティと認証**
+    \<div id="summary" class="output"\>\</div\>
 
-* 認証情報の管理  
-  * GEMINI\_API\_KEY、GEMINI\_MODEL などは環境変数で管理  
-  * APIキーはクライアントには露出させない  
-* データ保護  
-  * 音声ファイルのアップロード後は不要時に削除  
-  * 通信はHTTPSを前提  
-* 権限  
-  * サービスアカウントの最小権限原則
+    \<button id="copySummaryBtn" style="display:none;"\>コピー\</button\>
 
----
+  \</div\>
 
-## **テスト計画**
+  \<div class="section"\>
 
-* ユニットテスト  
-  * 音声ファイル検証、要点抽出のロジック、エラーメッセージの表示  
-* 統合テスト  
-  * /process のエンドツーエンドテスト（モック音声・モック Gemini API で検証）  
-* 受け入れテスト  
-  * 実際の音声ファイルを用いて、文字起こし・要約・要点が正しく表示されることを確認
+    \<h3\>要点\</h3\>
 
----
+    \<ul id="keyPoints"\>\</ul\>
 
-## **実行・導入手順**
+  \</div\>
 
-* 前提  
-  * Node.js 環境 (例: 18.x)  
-  * Google Cloud Speech-to-Text クレデンシャル設定  
-  * Gemini API キー（環境変数 GEMINI\_API\_KEY 等）  
-* ローカル開発  
-  * フロントエンド  
-    * 静的ファイルサーバで実行（例: npm run dev など）  
-  * バックエンド  
-    * npm install  
-    * .env ファイルに以下を設定  
-      * GEMINI\_API\_KEY=your\_api\_key  
-      * GEMINI\_MODEL=models/your-gemini-model  
-      * PORT=3000  
-  * 実行  
-    * node server.js または npm start  
-* デプロイ  
-  * CI/CD パイプラインを設定  
-  * 環境変数の管理（秘密情報ストレージを使用）
+  \<div class="section" id="errorArea" style="color: red;"\>\</div\>
 
----
+  \<script\>
 
-## **依存関係**
+    const runBtn \= document.getElementById('runBtn');
 
-* フロントエンド  
-  * HTML/CSS/JavaScript  
-  * fetch API, navigator.clipboard  
-* バックエンド  
-  * Node.js  
-  * Express  
-  * Multer (ファイルアップロード)  
-  * @google-cloud/speech (Speech-to-Text)  
-  * node-fetch または axios  
-* 外部サービス  
-  * Google Gemini API
+    const audioFileInput \= document.getElementById('audioFile');
 
----
+    const transcriptionDiv \= document.getElementById('transcription');
 
-## **公式URL・重要ポイント**
+    const summaryDiv \= document.getElementById('summary');
 
-* Gemini API ドキュメント（日本語）: [https://ai.google.dev/gemini-api/docs/models?hl=ja](https://ai.google.dev/gemini-api/docs/models?hl=ja)  
-* 重要ポイント  
-  * 認証と鍵管理を適切に実施  
-  * モデル名・エンドポイントは公式ドキュメントを参照  
-  * 入力サイズ・トークン上限、言語設定に注意  
-  * 料金・制限（レートリミット等）を把握
+    const keyPointsUl \= document.getElementById('keyPoints');
 
----
+    const errorArea \= document.getElementById('errorArea');
 
-## **変更履歴**
+    const copyTranscriptBtn \= document.getElementById('copyTranscriptBtn');
 
-* v0.1.0: 初版仕様書作成
+    const copySummaryBtn \= document.getElementById('copySummaryBtn');
 
----
+    function resetOutputs() {
 
-## **付録**
+      transcriptionDiv.textContent \= '';
 
-* 推奨ディレクトリ構成案  
-  * project/  
-    * SPEC.md  
-    * client/  
-      * index.html  
-      * main.js  
-      * styles.css  
-    * server/  
-      * server.js  
-      * package.json  
-    * .env.example  
-* 参考リンク  
-  * Gemini API: [https://ai.google.dev/gemini-api/docs/models?hl=ja](https://ai.google.dev/gemini-api/docs/models?hl=ja)
+      summaryDiv.textContent \= '';
+
+      keyPointsUl.innerHTML \= '';
+
+      errorArea.textContent \= '';
+
+      copyTranscriptBtn.style.display \= 'none';
+
+      copySummaryBtn.style.display \= 'none';
+
+    }
+
+    async function copyToClipboard(text) {
+
+      try {
+
+        await navigator.clipboard.writeText(text);
+
+        alert('コピーしました');
+
+      } catch (e) {
+
+        alert('コピーに失敗しました');
+
+      }
+
+    }
+
+    copyTranscriptBtn.addEventListener('click', () \=\> copyToClipboard(transcriptionDiv.textContent));
+
+    copySummaryBtn.addEventListener('click', () \=\> copyToClipboard(summaryDiv.textContent));
+
+    runBtn.addEventListener('click', async () \=\> {
+
+      resetOutputs();
+
+      const lectureName \= document.getElementById('lectureName').value;
+
+      const file \= audioFileInput.files\[0\];
+
+      if (\!file) {
+
+        errorArea.textContent \= '音声ファイルを選択してください。';
+
+        return;
+
+      }
+
+      const formData \= new FormData();
+
+      formData.append('lectureName', lectureName);
+
+      formData.append('audioFile', file);
+
+      try {
+
+        const res \= await fetch('/process', {
+
+          method: 'POST',
+
+          body: formData
+
+        });
+
+        if (\!res.ok) {
+
+          const err \= await res.json().catch(() \=\> ({}));
+
+          const msg \= err.message || 'Error while processing.';
+
+          errorArea.textContent \= msg;
+
+          return;
+
+        }
+
+        const payload \= await res.json();
+
+        transcriptionDiv.textContent \= payload.transcription || '';
+
+        summaryDiv.textContent \= payload.summary || '';
+
+        // キーポイントを表示
+
+        keyPointsUl.innerHTML \= '';
+
+        (payload.keyPoints || \[\]).forEach((kp) \=\> {
+
+          const li \= document.createElement('li');
+
+          li.textContent \= kp;
+
+          keyPointsUl.appendChild(li);
+
+        });
+
+        if (payload.transcription) copyTranscriptBtn.style.display \= 'inline-block';
+
+        if (payload.summary) copySummaryBtn.style.display \= 'inline-block';
+
+      } catch (err) {
+
+        errorArea.textContent \= 'API呼び出し中にエラーが発生しました。';
+
+      }
+
+    });
+
+  \</script\>
+
+\</body\>
+
+\</html\>
+
+// server.js
+
+const express \= require('express');
+
+const multer \= require('multer');
+
+const fetch \= require('node-fetch');
+
+const fs \= require('fs');
+
+const path \= require('path');
+
+const {SpeechClient} \= require('@google-cloud/speech'); // Google Cloud Speech-to-Text
+
+require('dotenv').config();
+
+const app \= express();
+
+const upload \= multer({ dest: 'uploads/' });
+
+// 簡易的なパス
+
+app.post('/process', upload.single('audioFile'), async (req, res) \=\> {
+
+  try {
+
+    const lectureName \= req.body.lectureName || '';
+
+    const file \= req.file;
+
+    if (\!file) {
+
+      return res.status(400).json({ message: '音声ファイルを選択してください。' });
+
+    }
+
+    // 1\) 音声ファイルを文字起こし（Speech-to-Text の例）
+
+    const transcription \= await transcribeAudio(file.path);
+
+    // 2\) Gemini API で要約
+
+    const summary \= await summarizeWithGemini(transcription);
+
+    // 要点（仮の抽出。実際には要約から抽出するか、別APIで抽出）
+
+    const keyPoints \= extractKeyPoints(summary);
+
+    // 一時ファイル削除
+
+    fs.unlinkSync(file.path);
+
+    res.json({
+
+      transcription,
+
+      summary,
+
+      keyPoints
+
+    });
+
+  } catch (err) {
+
+    console.error(err);
+
+    res.status(500).json({ message: '内部エラーが発生しました。' });
+
+  }
+
+});
+
+// 文字起こし関数（Google Cloud Speech-to-Text の例）
+
+async function transcribeAudio(filePath) {
+
+  const client \= new SpeechClient();
+
+  const audioBytes \= fs.readFileSync(filePath).toString('base64');
+
+  const request \= {
+
+    audio: { content: audioBytes },
+
+    config: {
+
+      encoding: 'LINEAR16', // 録音フォーマットに合わせる
+
+      languageCode: 'ja-JP'
+
+    }
+
+  };
+
+  const \[response\] \= await client.recognize(request);
+
+  const transcription \= (response.results || \[\])
+
+    .map(res \=\> res.alternatives\[0\].transcript)
+
+    .join('\\n');
+
+  return transcription;
+
+}
+
+// Gemini API で要約する関数（モデル・エンドポイントは公式ドキュメントを参照）
+
+async function summarizeWithGemini(text) {
+
+  const apiKey \= process.env.GEMINI\_API\_KEY;
+
+  const model \= process.env.GEMINI\_MODEL || 'models/your-gemini-model';
+
+  if (\!apiKey) throw new Error('Gemini API Key not configured.');
+
+  const prompt \= \`以下の講義の文字起こしを要約してください：\\n\\n${text}\`;
+
+  // 実際のエンドポイントは公式ドキュメントを参照してください
+
+  const endpoint \= \`https://gemini.googleapis.com/v1/models/${encodeURIComponent(model)}:predict\`;
+
+  const body \= {
+
+    prompt: { text: prompt }, // 仕様はモデルによって異なる
+
+    max\_tokens: 200, // 例
+
+  };
+
+  const resp \= await fetch(endpoint, {
+
+    method: 'POST',
+
+    headers: {
+
+      'Authorization': \`Bearer ${apiKey}\`,
+
+      'Content-Type': 'application/json'
+
+    },
+
+    body: JSON.stringify(body)
+
+  });
+
+  if (\!resp.ok) {
+
+    const err \= await resp.text();
+
+    throw new Error(\`Gemini API error: ${err}\`);
+
+  }
+
+  const data \= await resp.json();
+
+  // 返却形式はモデルにより異なる。以下は例です
+
+  const text \= data?.choices?.\[0\]?.text || data?.result?.summary || '';
+
+  return text.trim();
+
+}
+
+// 要点抽出（要約から3〜5個の箇条書き風に分割する簡易処理）
+
+function extractKeyPoints(summary) {
+
+  // 簡易実装: 各文を改行または句点で分割して3〜5個を抽出
+
+  if (\!summary) return \[\];
+
+  const sentences \= summary.split(/(?\<=\[。．！\!？\])\\s+/);
+
+  const points \= sentences.slice(0, 5).map(s \=\> s.trim()).filter(Boolean);
+
+  return points;
+
+}
+
+const PORT \= process.env.PORT || 3000;
+
+app.listen(PORT, () \=\> {
+
+  console.log(\`Server running on port ${PORT}\`);
+
+});
 
