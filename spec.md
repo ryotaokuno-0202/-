@@ -1,404 +1,478 @@
-\<\!DOCTYPE html\>
+<!DOCTYPE html>
 
-\<html lang="ja"\>
+<html lang="ja">
 
-\<head\>
+<head>
 
-  \<meta charset="UTF-8" /\>
+&#x20; <meta charset="UTF-8" />
 
-  \<title\>講義文字起こし＆要約デモ\</title\>
+&#x20; <title>講義文字起こし＆要約デモ</title>
 
-  \<style\>
+&#x20; <style>
 
-    body { font-family: Arial, sans-serif; padding: 20px; }
+&#x20;   body { font-family: Arial, sans-serif; padding: 20px; }
 
-    .section { margin-bottom: 20px; }
+&#x20;   .section { margin-bottom: 20px; }
 
-    .output { border: 1px solid \#ccc; padding: 12px; border-radius: 6px; min-height: 80px; white-space: pre-wrap; }
+&#x20;   .output { border: 1px solid #ccc; padding: 12px; border-radius: 6px; min-height: 80px; white-space: pre-wrap; }
 
-    button { margin-top: 6px; }
+&#x20;   button { margin-top: 6px; }
 
-  \</style\>
+&#x20; </style>
 
-\</head\>
+</head>
 
-\<body\>
+<body>
 
-  \<h1\>講義文字起こし＆要約デモ\</h1\>
+&#x20; <h1>講義文字起こし＆要約デモ</h1>
 
-  \<div class="section"\>
 
-    \<label\>講義名（任意）\</label\>\<br/\>
 
-    \<input type="text" id="lectureName" placeholder="講義名を入力" /\>
+&#x20; <div class="section">
 
-  \</div\>
+&#x20;   <label>講義名（任意）</label><br/>
 
-  \<div class="section"\>
+&#x20;   <input type="text" id="lectureName" placeholder="講義名を入力" />
 
-    \<label\>音声ファイルを選択\</label\>\<br/\>
+&#x20; </div>
 
-    \<input type="file" id="audioFile" accept=".wav,.mp3,.m4a,.flac" /\>
 
-  \</div\>
 
-  \<div class="section"\>
+&#x20; <div class="section">
 
-    \<button id="runBtn"\>実行\</button\>
+&#x20;   <label>音声ファイルを選択</label><br/>
 
-  \</div\>
+&#x20;   <input type="file" id="audioFile" accept=".wav,.mp3,.m4a,.flac" />
 
-  \<div class="section"\>
+&#x20; </div>
 
-    \<h3\>文字起こし\</h3\>
 
-    \<div id="transcription" class="output"\>\</div\>
 
-    \<button id="copyTranscriptBtn" style="display:none;"\>コピー\</button\>
+&#x20; <div class="section">
 
-  \</div\>
+&#x20;   <button id="runBtn">実行</button>
 
-  \<div class="section"\>
+&#x20; </div>
 
-    \<h3\>要約\</h3\>
 
-    \<div id="summary" class="output"\>\</div\>
 
-    \<button id="copySummaryBtn" style="display:none;"\>コピー\</button\>
+&#x20; <div class="section">
 
-  \</div\>
+&#x20;   <h3>文字起こし</h3>
 
-  \<div class="section"\>
+&#x20;   <div id="transcription" class="output"></div>
 
-    \<h3\>要点\</h3\>
+&#x20;   <button id="copyTranscriptBtn" style="display:none;">コピー</button>
 
-    \<ul id="keyPoints"\>\</ul\>
+&#x20; </div>
 
-  \</div\>
 
-  \<div class="section" id="errorArea" style="color: red;"\>\</div\>
 
-  \<script\>
+&#x20; <div class="section">
 
-    const runBtn \= document.getElementById('runBtn');
+&#x20;   <h3>要約</h3>
 
-    const audioFileInput \= document.getElementById('audioFile');
+&#x20;   <div id="summary" class="output"></div>
 
-    const transcriptionDiv \= document.getElementById('transcription');
+&#x20;   <button id="copySummaryBtn" style="display:none;">コピー</button>
 
-    const summaryDiv \= document.getElementById('summary');
+&#x20; </div>
 
-    const keyPointsUl \= document.getElementById('keyPoints');
 
-    const errorArea \= document.getElementById('errorArea');
 
-    const copyTranscriptBtn \= document.getElementById('copyTranscriptBtn');
+&#x20; <div class="section">
 
-    const copySummaryBtn \= document.getElementById('copySummaryBtn');
+&#x20;   <h3>要点</h3>
 
-    function resetOutputs() {
+&#x20;   <ul id="keyPoints"></ul>
 
-      transcriptionDiv.textContent \= '';
+&#x20; </div>
 
-      summaryDiv.textContent \= '';
 
-      keyPointsUl.innerHTML \= '';
 
-      errorArea.textContent \= '';
+&#x20; <div class="section" id="errorArea" style="color: red;"></div>
 
-      copyTranscriptBtn.style.display \= 'none';
 
-      copySummaryBtn.style.display \= 'none';
 
-    }
+&#x20; <script>
 
-    async function copyToClipboard(text) {
+&#x20;   const runBtn = document.getElementById('runBtn');
 
-      try {
+&#x20;   const audioFileInput = document.getElementById('audioFile');
 
-        await navigator.clipboard.writeText(text);
+&#x20;   const transcriptionDiv = document.getElementById('transcription');
 
-        alert('コピーしました');
+&#x20;   const summaryDiv = document.getElementById('summary');
 
-      } catch (e) {
+&#x20;   const keyPointsUl = document.getElementById('keyPoints');
 
-        alert('コピーに失敗しました');
+&#x20;   const errorArea = document.getElementById('errorArea');
 
-      }
+&#x20;   const copyTranscriptBtn = document.getElementById('copyTranscriptBtn');
 
-    }
+&#x20;   const copySummaryBtn = document.getElementById('copySummaryBtn');
 
-    copyTranscriptBtn.addEventListener('click', () \=\> copyToClipboard(transcriptionDiv.textContent));
 
-    copySummaryBtn.addEventListener('click', () \=\> copyToClipboard(summaryDiv.textContent));
 
-    runBtn.addEventListener('click', async () \=\> {
+&#x20;   function resetOutputs() {
 
-      resetOutputs();
+&#x20;     transcriptionDiv.textContent = '';
 
-      const lectureName \= document.getElementById('lectureName').value;
+&#x20;     summaryDiv.textContent = '';
 
-      const file \= audioFileInput.files\[0\];
+&#x20;     keyPointsUl.innerHTML = '';
 
-      if (\!file) {
+&#x20;     errorArea.textContent = '';
 
-        errorArea.textContent \= '音声ファイルを選択してください。';
+&#x20;     copyTranscriptBtn.style.display = 'none';
 
-        return;
+&#x20;     copySummaryBtn.style.display = 'none';
 
-      }
+&#x20;   }
 
-      const formData \= new FormData();
 
-      formData.append('lectureName', lectureName);
 
-      formData.append('audioFile', file);
+&#x20;   async function copyToClipboard(text) {
 
-      try {
+&#x20;     try {
 
-        const res \= await fetch('/process', {
+&#x20;       await navigator.clipboard.writeText(text);
 
-          method: 'POST',
+&#x20;       alert('コピーしました');
 
-          body: formData
+&#x20;     } catch (e) {
 
-        });
+&#x20;       alert('コピーに失敗しました');
 
-        if (\!res.ok) {
+&#x20;     }
 
-          const err \= await res.json().catch(() \=\> ({}));
+&#x20;   }
 
-          const msg \= err.message || 'Error while processing.';
 
-          errorArea.textContent \= msg;
 
-          return;
+&#x20;   copyTranscriptBtn.addEventListener('click', () => copyToClipboard(transcriptionDiv.textContent));
 
-        }
+&#x20;   copySummaryBtn.addEventListener('click', () => copyToClipboard(summaryDiv.textContent));
 
-        const payload \= await res.json();
 
-        transcriptionDiv.textContent \= payload.transcription || '';
 
-        summaryDiv.textContent \= payload.summary || '';
+&#x20;   runBtn.addEventListener('click', async () => {
 
-        // キーポイントを表示
+&#x20;     resetOutputs();
 
-        keyPointsUl.innerHTML \= '';
+&#x20;     const lectureName = document.getElementById('lectureName').value;
 
-        (payload.keyPoints || \[\]).forEach((kp) \=\> {
+&#x20;     const file = audioFileInput.files\[0];
 
-          const li \= document.createElement('li');
 
-          li.textContent \= kp;
 
-          keyPointsUl.appendChild(li);
+&#x20;     if (!file) {
 
-        });
+&#x20;       errorArea.textContent = '音声ファイルを選択してください。';
 
-        if (payload.transcription) copyTranscriptBtn.style.display \= 'inline-block';
+&#x20;       return;
 
-        if (payload.summary) copySummaryBtn.style.display \= 'inline-block';
+&#x20;     }
 
-      } catch (err) {
 
-        errorArea.textContent \= 'API呼び出し中にエラーが発生しました。';
 
-      }
+&#x20;     const formData = new FormData();
 
-    });
+&#x20;     formData.append('lectureName', lectureName);
 
-  \</script\>
+&#x20;     formData.append('audioFile', file);
 
-\</body\>
 
-\</html\>
+
+&#x20;     try {
+
+&#x20;       const res = await fetch('/process', {
+
+&#x20;         method: 'POST',
+
+&#x20;         body: formData
+
+&#x20;       });
+
+
+
+&#x20;       if (!res.ok) {
+
+&#x20;         const err = await res.json().catch(() => ({}));
+
+&#x20;         const msg = err.message || 'Error while processing.';
+
+&#x20;         errorArea.textContent = msg;
+
+&#x20;         return;
+
+&#x20;       }
+
+
+
+&#x20;       const payload = await res.json();
+
+&#x20;       transcriptionDiv.textContent = payload.transcription || '';
+
+&#x20;       summaryDiv.textContent = payload.summary || '';
+
+&#x20;       // キーポイントを表示
+
+&#x20;       keyPointsUl.innerHTML = '';
+
+&#x20;       (payload.keyPoints || \[]).forEach((kp) => {
+
+&#x20;         const li = document.createElement('li');
+
+&#x20;         li.textContent = kp;
+
+&#x20;         keyPointsUl.appendChild(li);
+
+&#x20;       });
+
+
+
+&#x20;       if (payload.transcription) copyTranscriptBtn.style.display = 'inline-block';
+
+&#x20;       if (payload.summary) copySummaryBtn.style.display = 'inline-block';
+
+&#x20;     } catch (err) {
+
+&#x20;       errorArea.textContent = 'API呼び出し中にエラーが発生しました。';
+
+&#x20;     }
+
+&#x20;   });
+
+&#x20; </script>
+
+</body>
+
+</html>
+
+
 
 // server.js
 
-const express \= require('express');
+const express = require('express');
 
-const multer \= require('multer');
+const multer = require('multer');
 
-const fetch \= require('node-fetch');
+const fetch = require('node-fetch');
 
-const fs \= require('fs');
+const fs = require('fs');
 
-const path \= require('path');
+const path = require('path');
 
-const {SpeechClient} \= require('@google-cloud/speech'); // Google Cloud Speech-to-Text
+const {SpeechClient} = require('@google-cloud/speech'); // Google Cloud Speech-to-Text
 
 require('dotenv').config();
 
-const app \= express();
 
-const upload \= multer({ dest: 'uploads/' });
+
+const app = express();
+
+const upload = multer({ dest: 'uploads/' });
+
+
 
 // 簡易的なパス
 
-app.post('/process', upload.single('audioFile'), async (req, res) \=\> {
+app.post('/process', upload.single('audioFile'), async (req, res) => {
 
-  try {
+&#x20; try {
 
-    const lectureName \= req.body.lectureName || '';
+&#x20;   const lectureName = req.body.lectureName || '';
 
-    const file \= req.file;
+&#x20;   const file = req.file;
 
-    if (\!file) {
 
-      return res.status(400).json({ message: '音声ファイルを選択してください。' });
 
-    }
+&#x20;   if (!file) {
 
-    // 1\) 音声ファイルを文字起こし（Speech-to-Text の例）
+&#x20;     return res.status(400).json({ message: '音声ファイルを選択してください。' });
 
-    const transcription \= await transcribeAudio(file.path);
+&#x20;   }
 
-    // 2\) Gemini API で要約
 
-    const summary \= await summarizeWithGemini(transcription);
 
-    // 要点（仮の抽出。実際には要約から抽出するか、別APIで抽出）
+&#x20;   // 1) 音声ファイルを文字起こし（Speech-to-Text の例）
 
-    const keyPoints \= extractKeyPoints(summary);
+&#x20;   const transcription = await transcribeAudio(file.path);
 
-    // 一時ファイル削除
 
-    fs.unlinkSync(file.path);
 
-    res.json({
+&#x20;   // 2) Gemini API で要約
 
-      transcription,
+&#x20;   const summary = await summarizeWithGemini(transcription);
 
-      summary,
 
-      keyPoints
 
-    });
+&#x20;   // 要点（仮の抽出。実際には要約から抽出するか、別APIで抽出）
 
-  } catch (err) {
+&#x20;   const keyPoints = extractKeyPoints(summary);
 
-    console.error(err);
 
-    res.status(500).json({ message: '内部エラーが発生しました。' });
 
-  }
+&#x20;   // 一時ファイル削除
+
+&#x20;   fs.unlinkSync(file.path);
+
+
+
+&#x20;   res.json({
+
+&#x20;     transcription,
+
+&#x20;     summary,
+
+&#x20;     keyPoints
+
+&#x20;   });
+
+&#x20; } catch (err) {
+
+&#x20;   console.error(err);
+
+&#x20;   res.status(500).json({ message: '内部エラーが発生しました。' });
+
+&#x20; }
 
 });
+
+
 
 // 文字起こし関数（Google Cloud Speech-to-Text の例）
 
 async function transcribeAudio(filePath) {
 
-  const client \= new SpeechClient();
+&#x20; const client = new SpeechClient();
 
-  const audioBytes \= fs.readFileSync(filePath).toString('base64');
+&#x20; const audioBytes = fs.readFileSync(filePath).toString('base64');
 
-  const request \= {
+&#x20; const request = {
 
-    audio: { content: audioBytes },
+&#x20;   audio: { content: audioBytes },
 
-    config: {
+&#x20;   config: {
 
-      encoding: 'LINEAR16', // 録音フォーマットに合わせる
+&#x20;     encoding: 'LINEAR16', // 録音フォーマットに合わせる
 
-      languageCode: 'ja-JP'
+&#x20;     languageCode: 'ja-JP'
 
-    }
+&#x20;   }
 
-  };
+&#x20; };
 
-  const \[response\] \= await client.recognize(request);
+&#x20; const \[response] = await client.recognize(request);
 
-  const transcription \= (response.results || \[\])
+&#x20; const transcription = (response.results || \[])
 
-    .map(res \=\> res.alternatives\[0\].transcript)
+&#x20;   .map(res => res.alternatives\[0].transcript)
 
-    .join('\\n');
+&#x20;   .join('\\n');
 
-  return transcription;
+&#x20; return transcription;
 
 }
+
+
 
 // Gemini API で要約する関数（モデル・エンドポイントは公式ドキュメントを参照）
 
 async function summarizeWithGemini(text) {
 
-  const apiKey \= process.env.GEMINI\_API\_KEY;
+&#x20; const apiKey = process.env.GEMINI\_API\_KEY;
 
-  const model \= process.env.GEMINI\_MODEL || 'models/your-gemini-model';
+&#x20; const model = process.env.GEMINI\_MODEL || 'models/your-gemini-model';
 
-  if (\!apiKey) throw new Error('Gemini API Key not configured.');
+&#x20; if (!apiKey) throw new Error('Gemini API Key not configured.');
 
-  const prompt \= \`以下の講義の文字起こしを要約してください：\\n\\n${text}\`;
 
-  // 実際のエンドポイントは公式ドキュメントを参照してください
 
-  const endpoint \= \`https://gemini.googleapis.com/v1/models/${encodeURIComponent(model)}:predict\`;
+&#x20; const prompt = `以下の講義の文字起こしを要約してください：\\n\\n${text}`;
 
-  const body \= {
 
-    prompt: { text: prompt }, // 仕様はモデルによって異なる
 
-    max\_tokens: 200, // 例
+&#x20; // 実際のエンドポイントは公式ドキュメントを参照してください
 
-  };
+&#x20; const endpoint = `https://gemini.googleapis.com/v1/models/${encodeURIComponent(model)}:predict`;
 
-  const resp \= await fetch(endpoint, {
 
-    method: 'POST',
 
-    headers: {
+&#x20; const body = {
 
-      'Authorization': \`Bearer ${apiKey}\`,
+&#x20;   prompt: { text: prompt }, // 仕様はモデルによって異なる
 
-      'Content-Type': 'application/json'
+&#x20;   max\_tokens: 200, // 例
 
-    },
+&#x20; };
 
-    body: JSON.stringify(body)
 
-  });
 
-  if (\!resp.ok) {
+&#x20; const resp = await fetch(endpoint, {
 
-    const err \= await resp.text();
+&#x20;   method: 'POST',
 
-    throw new Error(\`Gemini API error: ${err}\`);
+&#x20;   headers: {
 
-  }
+&#x20;     'Authorization': `Bearer ${apiKey}`,
 
-  const data \= await resp.json();
+&#x20;     'Content-Type': 'application/json'
 
-  // 返却形式はモデルにより異なる。以下は例です
+&#x20;   },
 
-  const text \= data?.choices?.\[0\]?.text || data?.result?.summary || '';
+&#x20;   body: JSON.stringify(body)
 
-  return text.trim();
+&#x20; });
+
+
+
+&#x20; if (!resp.ok) {
+
+&#x20;   const err = await resp.text();
+
+&#x20;   throw new Error(`Gemini API error: ${err}`);
+
+&#x20; }
+
+
+
+&#x20; const data = await resp.json();
+
+&#x20; // 返却形式はモデルにより異なる。以下は例です
+
+&#x20; const text = data?.choices?.\[0]?.text || data?.result?.summary || '';
+
+&#x20; return text.trim();
 
 }
+
+
 
 // 要点抽出（要約から3〜5個の箇条書き風に分割する簡易処理）
 
 function extractKeyPoints(summary) {
 
-  // 簡易実装: 各文を改行または句点で分割して3〜5個を抽出
+&#x20; // 簡易実装: 各文を改行または句点で分割して3〜5個を抽出
 
-  if (\!summary) return \[\];
+&#x20; if (!summary) return \[];
 
-  const sentences \= summary.split(/(?\<=\[。．！\!？\])\\s+/);
+&#x20; const sentences = summary.split(/(?<=\[。．！!？])\\s+/);
 
-  const points \= sentences.slice(0, 5).map(s \=\> s.trim()).filter(Boolean);
+&#x20; const points = sentences.slice(0, 5).map(s => s.trim()).filter(Boolean);
 
-  return points;
+&#x20; return points;
 
 }
 
-const PORT \= process.env.PORT || 3000;
 
-app.listen(PORT, () \=\> {
 
-  console.log(\`Server running on port ${PORT}\`);
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+
+&#x20; console.log(`Server running on port ${PORT}`);
 
 });
 
